@@ -1,0 +1,3 @@
+[submodule "projectFolder/third-party/flexibity"]
+	path = projectFolder/third-party/flexibity
+	url = git@github.com:Questomatic/boost-tools.git

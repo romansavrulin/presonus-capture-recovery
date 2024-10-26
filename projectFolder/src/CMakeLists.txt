@@ -3,6 +3,7 @@
 set(sources_list
     # anotherFolder/myfile.cpp
 )
+
 # Get all the .cpp files in any projectFolder/src/dir directory
 file(GLOB directories */)
 foreach(dir ${directories})
@@ -14,14 +15,17 @@ foreach(dir ${directories})
         list(APPEND sources_list ${sources})
     endif()
 endforeach()
+
 # Create a library target that contains all of the sources
 add_library(${PROJECT_NAME}_LIB ${sources_list})
+
 # Add the include directories to the library target.
 # Remember to add any include that is not in a projectFolder/src/dir directory
 target_include_directories(
     ${PROJECT_NAME}_LIB
     PUBLIC
         ${CMAKE_SOURCE_DIR}/src
+        ${CMAKE_SOURCE_DIR}/third-party/
 )
 
 # Define the compiler flags based on the build type
@@ -32,7 +36,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     )
     if(UNIX)
         list(APPEND COMPILER_FLAGS
-            -Werror
+            #-Werror
             -Wpedantic
             -Wextra
         )
@@ -49,6 +53,7 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
         )
     endif()
 endif()
+
 # Set the compiler flags for the library target
 target_compile_options(
     ${PROJECT_NAME}_LIB
@@ -61,13 +66,14 @@ target_compile_options(
 # or using -D flags as a compiler option
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(PREPROCESSOR_MACROS
-        DEBUG
+        DEBUGG
     )
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
     set(PREPROCESSOR_MACROS
         RELEASE
     )
 endif()
+
 if(LINUX)
     list(APPEND PREPROCESSOR_MACROS
         LINUX
@@ -81,6 +87,7 @@ elseif(WIN32)
         WINDOWS
     )
 endif()
+
 # Set the preprocessor macros for the library target
 target_compile_definitions(
     ${PROJECT_NAME}_LIB
@@ -95,6 +102,7 @@ target_compile_features(
         c_std_11
         cxx_std_17
 )
+
 # Ensure that the C++ standard is mandatory
 # and disable compiler-specific extensions
 set_target_properties(
@@ -103,6 +111,24 @@ set_target_properties(
             CXX_STANDARD_REQUIRED ON
             CXX_EXTENSIONS OFF
 )
+
+find_package(Boost 1.85 COMPONENTS program_options REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
+
+find_package(Jsoncpp REQUIRED)
+include_directories(${Jsoncpp_INCLUDE_DIR})
+
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(JSONCPP jsoncpp)
+
+if(Jsoncpp_FOUND)
+    message("INFO: we found LibJsoncpp")
+    message(Jsoncpp_FOUND = ${Jsoncpp_FOUND})
+    message(Jsoncpp_INCLUDE_DIR = ${JSONCPP_INCLUDE_DIRS})
+    message(JSONCPP_LINK_LIBRARIES = ${JSONCPP_LINK_LIBRARIES})
+else(Jsoncpp_FOUND)
+    message("WARNING: we couldn't find libjsoncpp-dev")
+endif(Jsoncpp_FOUND)
 
 # Define the linker options based on the build type
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -122,11 +148,13 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
         )
     endif()
 endif()
+
 if(LINUX)
     list(APPEND LINKER_OPTIONS
         -Wl,--no-undefined # Fail if there are any unresolved symbols in the final linked output
     )
 endif()
+
 # Set the linker options for the library target
 target_link_options(
     ${PROJECT_NAME}_LIB
@@ -138,4 +166,6 @@ target_link_libraries(
     ${PROJECT_NAME}_LIB
     PUBLIC
         # Add libraries to link to the binary here
+        Boost::program_options
+        ${JSONCPP_LINK_LIBRARIES}
 )

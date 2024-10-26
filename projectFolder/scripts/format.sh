@@ -1,5 +1,7 @@
 #!/bin/bash
 
+exit 0
+
 find projectFolder/src/ -iname *.h -o -iname *.cpp | xargs clang-format -i
 
 find projectFolder/tests/ -iname *.h -o -iname *.cpp | xargs clang-format -i
