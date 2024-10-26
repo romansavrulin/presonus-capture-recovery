@@ -1,0 +1,129 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        // Build tasks
+        {
+            "label": "build_cmake_debug",
+            "type": "shell",
+            "presentation": {
+                "focus": true,
+                "showReuseMessage": false
+            },
+            "group": {
+                "kind": "build"
+            },
+
+            "command": "${workspaceFolder}/projectFolder/scripts/build_cmake_debug.sh",
+
+            "windows": {
+                "command": "${workspaceFolder}/projectFolder/scripts/windows/build_cmake_debug.ps1"
+            }
+        },
+        {
+            "label": "build_debug",
+            "type": "shell",
+            "presentation": {
+                "focus": true,
+                "showReuseMessage": false
+            },
+            "group": {
+                "kind": "build"
+            },
+
+            "command": "${workspaceFolder}/projectFolder/scripts/build_debug.sh",
+
+            "windows": {
+                "command": "${workspaceFolder}/projectFolder/scripts/windows/build_debug.ps1"
+            }
+        },
+        {
+            "label": "create_release",
+            "type": "shell",
+            "presentation": {
+                "focus": true,
+                "showReuseMessage": false
+            },
+            "group": {
+                "kind": "build"
+            },
+
+            "command": "${workspaceFolder}/projectFolder/scripts/create_release.sh",
+
+            "windows": {
+                "command": "${workspaceFolder}/projectFolder/scripts/windows/create_release.ps1"
+            }
+        },
+        // Run tasks
+        {
+            "label": "run_debug_build",
+            "type": "shell",
+            "presentation": {
+                "focus": true,
+                "showReuseMessage": false
+            },
+            "group": {
+                "kind": "build"
+            },
+
+            "command": "${workspaceFolder}/build/Debug/bin/cpp-cmake-template"
+        },
+        {
+            "label": "run_release_build",
+            "type": "shell",
+            "presentation": {
+                "focus": true,
+                "showReuseMessage": false
+            },
+            "group": {
+                "kind": "build"
+            },
+
+            "command": "${workspaceFolder}/build/Release/bin/cpp-cmake-template"
+        },
+        // Test tasks
+        {
+            "label": "run_tests",
+            "type": "shell",
+            "presentation": {
+                "focus": true,
+                "showReuseMessage": false
+            },
+            "group": {
+                "kind": "build"
+            },
+
+            "command": "${workspaceFolder}/projectFolder/scripts/run_tests.sh",
+
+            "windows": {
+                "command": "${workspaceFolder}/projectFolder/scripts/windows/run_tests.ps1"
+            }
+        },
+        {
+            "label": "run_tests_in_Docker",
+            "type": "shell",
+            "presentation": {
+                "focus": true,
+                "showReuseMessage": false
+            },
+            "group": {
+                "kind": "build"
+            },
+
+            "command": "${workspaceFolder}/projectFolder/scripts/run_tests_in_Docker.sh"
+        },
+        // Other tasks
+        {
+            "label": "format_code",
+            "type": "shell",
+            "presentation": {
+                "focus": true,
+                "showReuseMessage": false
+            },
+            "group": {
+                "kind": "build"
+            },
+
+            "command": "${workspaceFolder}/projectFolder/scripts/format.sh"
+        }
+    ]
+}

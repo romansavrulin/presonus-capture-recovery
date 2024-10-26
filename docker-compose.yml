@@ -1,0 +1,14 @@
+services:
+  dev-container:
+
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dev-container
+    tty: true
+
+    environment:
+      - TEST_VAR_COMPOSE=test
+
+    ports:
+      - 8080:5555

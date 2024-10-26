@@ -1,0 +1,25 @@
+---
+BasedOnStyle: Google
+Language: Cpp
+IndentWidth: 4
+UseTab: Never
+BreakBeforeBraces: Allman
+AlwaysBreakBeforeMultilineStrings: true
+AlwaysBreakTemplateDeclarations: true
+NamespaceIndentation: All
+KeepEmptyLinesAtTheStartOfBlocks: true
+AllowShortFunctionsOnASingleLine: Empty
+SpaceBeforeParens: ControlStatements
+# Only available in clang-format v16
+# InsertNewlineAtEOF: true
+
+# Define the ordering of include categories
+IncludeCategories:
+  - Regex: '.*'
+    Priority: 1
+  - Regex: '<.*>'
+    Priority: 2
+
+# Disabling it cause Google style sets it
+DerivePointerAlignment: false
+PointerBindsToType: true
