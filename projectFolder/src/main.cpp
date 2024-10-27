@@ -81,40 +81,43 @@ int main(int argc, char** argv)
 {
     Flexibity::programOptions options;
 
-    std::string imgName;
-    uint32_t numTracks = 34;  // default is 34 (arm all)
-    uint32_t channelBlockSize = 0x8000;
-    uint32_t byteOffset = 0;
-    uint64_t offset = 0;
-    uint32_t count = 0;
-    uint32_t mode = 0;
-    uint32_t repition = 8;
-    uint32_t selected = 1;
-    bool dummyRead = false;
-    std::string dest;
+    struct OPTIONS {
 
-    char* readBuf = new char[channelBlockSize];
+        std::string imgName;
+        uint32_t numTracks = 34;  // default is 34 (arm all)
+        uint32_t channelBlockSize = 0x8000;
+        uint32_t byteOffset = 0;
+        uint64_t offset = 0;
+        uint32_t count = 0;
+        uint32_t mode = 0;
+        uint32_t repition = 8;
+        uint32_t selected = 1;
+        bool dummyRead = false;
+        std::string dest;
+    };
+
+    OPTIONS opts;
 
     options.desc.add_options()(
-        "img,i", Flexibity::po::value<std::string>(&imgName)->required(),
+        "img,i", Flexibity::po::value<std::string>(&opts.imgName)->required(),
         "Define the image filename to recover from")(
-        "tracks,t", Flexibity::po::value<uint32_t>(&numTracks),
+        "tracks,t", Flexibity::po::value<uint32_t>(&opts.numTracks),
         "Define the number of tracks recorded")(
-        "offset,o", Flexibity::po::value<uint64_t>(&offset),
+        "offset,o", Flexibity::po::value<uint64_t>(&opts.offset),
         "Define the offset in the image")(
-        "bOffset,b", Flexibity::po::value<uint32_t>(&byteOffset),
+        "bOffset,b", Flexibity::po::value<uint32_t>(&opts.byteOffset),
         "Define the Byte Offset in audio stream")(
-        "count,c", Flexibity::po::value<uint32_t>(&count),
+        "count,c", Flexibity::po::value<uint32_t>(&opts.count),
         "Define the blocks Count")("mode,m",
-                                   Flexibity::po::value<uint32_t>(&mode),
+                                   Flexibity::po::value<uint32_t>(&opts.mode),
                                    "Define the work mode")(
-        "repitition,r", Flexibity::po::value<uint32_t>(&repition),
+        "repitition,r", Flexibity::po::value<uint32_t>(&opts.repition),
         "Define channel repitition count")(
-        "dest,d", Flexibity::po::value<std::string>(&dest),
+        "dest,d", Flexibity::po::value<std::string>(&opts.dest),
         "Define the destination folder")(
-        "selected,s", Flexibity::po::value<uint32_t>(&selected),
+        "selected,s", Flexibity::po::value<uint32_t>(&opts.selected),
         "Define selected channel for recovery")(
-        "dummy,u", Flexibity::po::value<bool>(&dummyRead),
+        "dummy,u", Flexibity::po::value<bool>(&opts.dummyRead),
         "Use dummy read (experiment)")
         ;
 
@@ -122,19 +125,28 @@ int main(int argc, char** argv)
 
     options.parse(argc, argv);
 
-    std::ifstream img(imgName);
+    char* readBuf = new char[opts.channelBlockSize];
+    std::ifstream img(opts.imgName);
     std::ofstream of("out.wav");
 
     if (!img.is_open())
     {
-        GINFO("Unable to open image " << imgName << " with " << img.rdstate());
+        GINFO("Unable to open image " << opts.imgName << " with " << img.rdstate());
         return 1;
     }
 
-    img.seekg(offset);
+    img.seekg(opts.offset);
+
+    auto mode = opts.mode;
 
     if (mode == 0)
     {  // dumb recovery for healthy FS
+
+        auto count = opts.count;
+        auto channelBlockSize = opts.channelBlockSize;
+        auto selected = opts.selected;
+        auto numTracks = opts.numTracks;
+        auto repition = opts.repition;
 
         auto countStart = count;
 
@@ -174,6 +186,12 @@ int main(int argc, char** argv)
     }
     else if (mode == 1)
     {  // sector mapping to study the write sequence pattern
+
+        auto count = opts.count;
+        auto channelBlockSize = opts.channelBlockSize;
+        auto numTracks = opts.numTracks;
+        auto dest = opts.dest;
+
         auto maps = new WAV_MAPPER[numTracks];
 
         // init/open streams
@@ -268,6 +286,11 @@ int main(int argc, char** argv)
     }
     else if (mode == 2)
     {  // sector mapping to study the write sequence pattern
+        auto count = opts.count;
+        auto channelBlockSize = opts.channelBlockSize;
+        auto numTracks = opts.numTracks;
+        auto dest = opts.dest;
+
         auto maps = new WAV_MAPPER[numTracks];
 
         // init/open streams
@@ -376,9 +399,15 @@ int main(int argc, char** argv)
     }if (mode == 3)
     {  // actual recovery for unsaved session
 
-        auto countStart = count;
+        auto count = opts.count;
+        auto channelBlockSize = opts.channelBlockSize;
+        auto selected = opts.selected;
+        auto numTracks = opts.numTracks;
+        auto repition = opts.repition;
+        auto dest = opts.dest;
+        auto dummyRead = opts.dummyRead;
 
-        auto start = img.tellg();
+        auto countStart = count;
 
         WAV_HEADER wh = {
             .chunkId = {'R','I','F','F'},
