@@ -100,7 +100,7 @@ target_compile_features(
     ${PROJECT_NAME}_LIB
     PUBLIC
         c_std_11
-        cxx_std_17
+        cxx_std_20
 )
 
 # Ensure that the C++ standard is mandatory

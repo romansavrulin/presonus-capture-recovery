@@ -3,6 +3,7 @@
 #include "utility/utility.h"
 #include <fstream>
 #include <iostream>
+#include <format>
 
 struct WAV_MAPPER
 {
@@ -486,6 +487,16 @@ int main(int argc, char** argv)
     {  // actual recovery for unsaved session
 
         doRecover(opts);
+    }if (mode == 4)
+    {  // actual recovery for all channels of unsaved session
+        auto numTracks = opts.numTracks;
+
+        for (uint32_t i = 0; i < numTracks; ++i)
+        {   
+            opts.ofName = std::format("Recover {}.wav", i + 1);
+            opts.selected = i + 1;
+            doRecover(opts);
+        }
     }
 
     img.close();
