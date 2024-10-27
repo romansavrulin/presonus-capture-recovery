@@ -25,7 +25,7 @@ struct WAV_HEADER
     // Это оставшийся размер цепочки, начиная с этой позиции.
     // Иначе говоря, это размер файла - 8, то есть,
     // исключены поля chunkId и chunkSize.
-    unsigned long chunkSize;
+    uint32_t chunkSize;
 
     // Содержит символы "WAVE"
     // (0x57415645 в big-endian представлении)
@@ -40,29 +40,29 @@ struct WAV_HEADER
 
     // 16 для формата PCM.
     // Это оставшийся размер подцепочки, начиная с этой позиции.
-    unsigned long subchunk1Size;
+    uint32_t subchunk1Size;
 
     // Аудио формат, полный список можно получить здесь
     // http://audiocoding.ru/wav_formats.txt Для PCM = 1 (то есть, Линейное
     // квантование). Значения, отличающиеся от 1, обозначают некоторый формат
     // сжатия.
-    unsigned short audioFormat;
+    uint16_t audioFormat;
 
     // Количество каналов. Моно = 1, Стерео = 2 и т.д.
-    unsigned short numChannels;
+    uint16_t numChannels;
 
     // Частота дискретизации. 8000 Гц, 44100 Гц и т.д.
-    unsigned long sampleRate;
+    uint32_t sampleRate;
 
     // sampleRate * numChannels * bitsPerSample/8
-    unsigned long byteRate;
+    uint32_t byteRate;
 
     // numChannels * bitsPerSample/8
     // Количество байт для одного сэмпла, включая все каналы.
-    unsigned short blockAlign;
+    uint16_t blockAlign;
 
     // Так называемая "глубиная" или точность звучания. 8 бит, 16 бит и т.д.
-    unsigned short bitsPerSample;
+    uint16_t bitsPerSample;
 
     // Подцепочка "data" содержит аудио-данные и их размер.
 
@@ -72,7 +72,7 @@ struct WAV_HEADER
 
     // numSamples * numChannels * bitsPerSample/8
     // Количество байт в области данных.
-    unsigned long subchunk2Size;
+    uint32_t subchunk2Size;
 
     // Далее следуют непосредственно Wav данные.
 };
@@ -85,10 +85,12 @@ int main(int argc, char** argv)
     uint32_t numTracks = 34;  // default is 34 (arm all)
     uint32_t channelBlockSize = 0x8000;
     uint32_t byteOffset = 0;
-    uint32_t offset = 0;
+    uint64_t offset = 0;
     uint32_t count = 0;
     uint32_t mode = 0;
     uint32_t repition = 8;
+    uint32_t selected = 1;
+    bool dummyRead = false;
     std::string dest;
 
     char* readBuf = new char[channelBlockSize];
@@ -98,7 +100,7 @@ int main(int argc, char** argv)
         "Define the image filename to recover from")(
         "tracks,t", Flexibity::po::value<uint32_t>(&numTracks),
         "Define the number of tracks recorded")(
-        "offset,o", Flexibity::po::value<uint32_t>(&offset),
+        "offset,o", Flexibity::po::value<uint64_t>(&offset),
         "Define the offset in the image")(
         "bOffset,b", Flexibity::po::value<uint32_t>(&byteOffset),
         "Define the Byte Offset in audio stream")(
@@ -109,7 +111,14 @@ int main(int argc, char** argv)
         "repitition,r", Flexibity::po::value<uint32_t>(&repition),
         "Define channel repitition count")(
         "dest,d", Flexibity::po::value<std::string>(&dest),
-        "Define the destination folder");
+        "Define the destination folder")(
+        "selected,s", Flexibity::po::value<uint32_t>(&selected),
+        "Define selected channel for recovery")(
+        "dummy,u", Flexibity::po::value<bool>(&dummyRead),
+        "Use dummy read (experiment)")
+        ;
+
+        
 
     options.parse(argc, argv);
 
@@ -130,17 +139,21 @@ int main(int argc, char** argv)
         auto countStart = count;
 
         auto start = img.tellg();
+        img.seekg(channelBlockSize * (selected - 1), std::ios_base::cur);
         img.read(readBuf, channelBlockSize);
         GINFO("Read header: " << std::hex << channelBlockSize
                               << " from: " << std::hex << start
                               << " to: " << std::hex << img.tellg());
 
         // skip all channels
-        img.seekg(channelBlockSize * (numTracks - 1), std::ios_base::cur);
+        img.seekg(channelBlockSize * (numTracks - selected), std::ios_base::cur);
         GINFO("Finalizing iter " << countStart - count + 1
                                  << " Seeking to: " << std::hex << img.tellg());
         of.write(readBuf, channelBlockSize);
         GINFO(Flexibity::log::dump(readBuf, channelBlockSize));
+
+        img.seekg(channelBlockSize * (selected - 1) * repition,
+                      std::ios_base::cur);
 
         while (count)
         {
@@ -360,6 +373,70 @@ int main(int argc, char** argv)
         }
 
         delete[] maps;
+    }if (mode == 3)
+    {  // actual recovery for unsaved session
+
+        auto countStart = count;
+
+        auto start = img.tellg();
+
+        WAV_HEADER wh = {
+            .chunkId = {'R','I','F','F'},
+            .chunkSize = 0x7FFFFF98,
+            .format = {'W','A','V','E'},
+            .subchunk1Id = {'f','m','t', ' '},
+            .subchunk1Size = 16,
+            .audioFormat = 1,
+            .numChannels = 1,
+            .sampleRate = 48000, //TODO: add to params
+            .byteRate = 144000,
+            .blockAlign = 3,
+            .bitsPerSample = 24,
+            .subchunk2Id = {'d','a','t','a'},
+            .subchunk2Size = 0x7FFFFF74
+
+        };
+
+
+        of.write((char *)&wh, sizeof(wh)); 
+
+        img.seekg(channelBlockSize * (selected - 1) * repition,
+                      std::ios_base::cur);
+
+        while (count)
+        {
+            for (auto i = repition; i > 0; --i)
+            {
+                auto startPos = img.tellg();
+
+                if (dummyRead && i == repition) {
+                    auto startPos = img.tellg();
+
+                    char dummy[] = "\0\0\0\0";
+
+                    img.read(readBuf, channelBlockSize);
+                    of.write(dummy, 3);
+                    GINFO("dummyRead: " << std::hex << startPos << " -> " << std::hex << img.tellg());
+                    GINFO(Flexibity::log::dump(readBuf, channelBlockSize));
+                    GINFO("=== Dummy ===");
+                }
+                
+                img.read(readBuf, channelBlockSize);
+                GINFO("Read data: " << std::hex << channelBlockSize
+                              << " from: " << std::hex << startPos
+                              << " to: " << std::hex << img.tellg()); 
+                GINFO(Flexibity::log::dump(readBuf, channelBlockSize));
+                of.write(readBuf, channelBlockSize);
+            }
+            img.seekg(channelBlockSize * (numTracks - 1) * repition,
+                      std::ios_base::cur);
+            GINFO("Finalizing iter " << countStart - count + 1
+                                 << " Seeking to: " << std::hex << img.tellg());
+
+            --count;
+        }
+
+        of.close();
     }
 
     img.close();
