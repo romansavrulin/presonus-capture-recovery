@@ -56,6 +56,15 @@ Data Block Size: 0x880000
 0x990000: Ch 1 Chunk 1
 ```
 
+To run test recovery from dumped flash data you should run
+
+```
+projectFolder/scripts/build_cmake_debug.sh
+projectFolder/scripts/build_debug.sh
+tar -xJf sample-data/kvart.xz -C sample-data/
+./build/Debug/bin/cpp-cmake-template -i sample-data/kvart.dd -m 4 -d sample-data/ -o 0x146AA800 -t 34 -c 78
+```
+
 нет искажений, но есть затыки
 ```
 ./build/Debug/bin/cpp-cmake-template -i ~/Downloads/Kvart-recovery/kvart.dd -c 100 -m 3 -d ~/Downloads/Kvart-recovery/Kvart\ Ben/Audio/ -s 20 -o 0x2F9402800 -t 34
