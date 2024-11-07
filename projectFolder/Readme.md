@@ -43,7 +43,7 @@ To run test recovery from dumped flash data you should run
 projectFolder/scripts/build_cmake_debug.sh
 projectFolder/scripts/build_debug.sh
 tar -xJf sample-data/kvart.xz -C sample-data/
-./build/Debug/bin/cpp-cmake-template -i sample-data/kvart.dd -m 4 -d sample-data/ -o 0x146AA800 -t 34 -c 78
+./build/Debug/bin/cpp-cmake-template -i sample-data/kvart.dd -m 4 -d sample-data/ -o 0x146AA800 -t 34 -c 70
 ```
 
 нет искажений, но есть затыки
