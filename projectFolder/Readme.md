@@ -1,33 +1,14 @@
-1459A800  d=0x8000
+Correct session
 
-145A2800
+Headers start: 1459A800  d=0x8000
 
-145AA800
-
-145B2800
-
-145BA800
-
-Data end: 146AA800
-
-
-Last correct byte for track1: 146B2800
-
-Next correct byte for track1: 146B2800 
-
-
-2F940А800
-2F940A800
-2F9402800
-2F93FA800 
-
-18000 - Инкремент между каналами
+Headers end, raw data start: 0x146AA800
 
 ```
 To align for removing distortions, you should step with `Data Block Size`
 To align for removing skips, you should step with `Chunk size`
 To move channels forward you should step back `Channel Block size`
-To move in time you should step with `Data Block Size * 3` (0x1980000)
+To move in time you should step with `Data Block Size * 3` (0x1980000 for 34 channels) - 100 0x9F600000 30 0x2FD00000
 
 Chunk size: 0x8000
 Channel Block size: 0x40000
